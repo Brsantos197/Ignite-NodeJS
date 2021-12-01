@@ -6,12 +6,22 @@ const app = express();
 app.use(express.json());
 
 const costumers = [];
-/*
- * cpf - string
- * name - string
- * name - string
- * statement []
- */
+
+//Middleware
+function verifyIfExistsAccountCPF(request, response, next) {
+  const { cpf } = request.headers;
+
+  const costumer = costumers.find((cosutmer) => cosutmer.cpf === cpf);
+
+  if (!costumer) {
+    return response.status(400).json({ error: "Cosutmer not found" });
+  }
+
+  request.costumer = costumer;
+
+  return next();
+}
+
 app.post("/account", (request, response) => {
   const { cpf, name } = request.body;
 
@@ -33,15 +43,10 @@ app.post("/account", (request, response) => {
   return response.status(201).send();
 });
 
-app.get("/statement/", (request, response) => {
-  const { cpf } = request.headers;
+// app.use(verifyIfExistsAccountCPF)
 
-  const costumer = costumers.find((cosutmer) => cosutmer.cpf === cpf);
-
-  if (!costumer) {
-    return response.status(400).json({ error: "Cosutmer not found" });
-  }
-
+app.get("/statement/", verifyIfExistsAccountCPF, (request, response) => {
+  const { costumer } = request;
   return response.json(costumer.statement);
 });
 
